@@ -13,7 +13,7 @@
 #include <soc.h>
 #include <zephyr/arch/cpu.h>
 #include <stm32_ll_bus.h>
-#include <stm32_ll_dbgmcu.h>
+//#include <stm32_ll_dbgmcu.h>
 #include <stm32_ll_pwr.h>
 #include <stm32_ll_system.h>
 

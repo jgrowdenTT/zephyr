@@ -1945,6 +1945,39 @@ static int cmd_i3c_i2c_scan(const struct shell *sh, size_t argc, char **argv)
 
 	return 0;
 }
+
+/* i3c i2c_transfer <device> <addr> <data_byte> */
+static int cmd_i3c_i2c_transfer(const struct shell *sh, size_t argc, char **argv)
+{
+	const struct device *dev;
+	struct i2c_msg msgs[1];
+	uint16_t addr = 0;
+	uint8_t data_byte;
+	int ret;
+
+	dev = shell_device_get_binding(argv[ARGV_DEV]);
+	if (!dev) {
+		shell_error(sh, "I3C: Device driver %s not found.", argv[ARGV_DEV]);
+		return -ENODEV;
+	}
+
+	addr = strtol(argv[2], NULL, 16);
+	data_byte = strtol(argv[3], NULL, 16);
+
+	/* Set up message to write one byte */
+	msgs[0].buf = &data_byte;
+	msgs[0].len = 1U;
+	msgs[0].flags = I2C_MSG_WRITE | I2C_MSG_STOP;
+
+	ret = i2c_transfer(dev, &msgs[0], 1, addr);
+	if (ret == 0) {
+		shell_print(sh, "I2C: Successfully wrote 0x%02x to addr 0x%02x", data_byte, addr);
+	} else {
+		shell_error(sh, "I2C: Transfer failed with error %d", ret);
+	}
+
+	return (ret == 0) ? 0 : ret;
+}
 #endif /* CONFIG_I3C_CONTROLLER */
 #ifdef CONFIG_I3C_USE_IBI
 #ifdef CONFIG_I3C_CONTROLLER
@@ -2446,6 +2479,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      SHELL_HELP("Scan I2C devices",
 				 "<device>"),
 		      cmd_i3c_i2c_scan, 2, 0),
+	SHELL_CMD_ARG(i2c_transfer, &dsub_i3c_device_name,
+		      "Transfer byte to I2C device\n"
+		      "Usage: i2c_transfer <device> <addr> <data_byte>",
+		      cmd_i3c_i2c_transfer, 4, 0),
 	SHELL_CMD_ARG(ccc, &sub_i3c_ccc_cmds,
 		      SHELL_HELP("Send I3C CCC",
 				 "<sub cmd>"),

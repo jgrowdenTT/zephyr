@@ -5,10 +5,11 @@
  */
 
 #include <stdio.h>
+#include <soc.h>
 
 int main(void)
 {
-	printf("Hello World! %s\n", CONFIG_BOARD_TARGET);
-
+	printf("Hello World! this is definitely going to pass %s\n", CONFIG_BOARD_TARGET);
+	test_pass ();
 	return 0;
 }
