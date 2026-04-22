@@ -31,3 +31,9 @@ properties:
 
       For example
          dma-names = "rx", "tx", "tc", "rs";
+
+  tcas-min-tenths-ns:
+    type: int
+    default: 384
+    description: |
+      Minimum TCAS timing parameter in tenths of nanoseconds.

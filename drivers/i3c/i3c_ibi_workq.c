@@ -204,6 +204,7 @@ static void i3c_ibi_work_handler(struct k_work *work)
 		break;
 
 	case I3C_IBI_HOTJOIN:
+#ifdef CONFIG_I3C_CONTROLLER
 		ret = i3c_do_daa(ibi_node->controller);
 		if ((ret != 0) && (ret != -EBUSY)) {
 			LOG_ERR("i3c_do_daa returns %d", ret);
@@ -216,6 +217,7 @@ static void i3c_ibi_work_handler(struct k_work *work)
 			}
 		}
 #endif /* CONFIG_I3C_TARGET */
+#endif /*CONFIG_I3C_CONTROLLER*/
 		break;
 
 	case I3C_IBI_WORKQUEUE_CB:
@@ -226,10 +228,12 @@ static void i3c_ibi_work_handler(struct k_work *work)
 
 	case I3C_IBI_CONTROLLER_ROLE_REQUEST:
 #ifdef CONFIG_I3C_TARGET
+#ifdef CONFIG_I3C_CONTROLLER
 		ret = i3c_device_controller_handoff(ibi_node->target, true);
 		if (ret != 0) {
 			LOG_ERR("i3c_device_controller_handoff returns %d", ret);
 		}
+#endif /* CONFIG_I3C_CONTROLLER */
 #endif /* CONFIG_I3C_TARGET */
 		break;
 

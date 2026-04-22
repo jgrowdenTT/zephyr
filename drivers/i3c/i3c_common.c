@@ -30,7 +30,7 @@ void i3c_dump_msgs(const char *name, const struct i3c_msg *msgs, uint8_t num_msg
 		}
 	}
 }
-
+#ifdef CONFIG_I3C_CONTROLLER
 void i3c_addr_slots_set(struct i3c_addr_slots *slots, uint8_t dev_addr,
 			enum i3c_addr_slot_status status)
 {
@@ -784,6 +784,7 @@ int i3c_device_adv_info_get(struct i3c_device_desc *target)
 		}
 	}
 
+
 	/* CRCAPS */
 	if ((target->getcaps.getcap3 & I3C_CCC_GETCAPS3_GETCAPS_DEFINING_BYTE_SUPPORT) &&
 	    (i3c_device_is_controller_capable(target))) {
@@ -792,6 +793,7 @@ int i3c_device_adv_info_get(struct i3c_device_desc *target)
 			return ret;
 		}
 	}
+
 
 	/* GETMXDS */
 	if (target->bcr & I3C_BCR_MAX_DATA_SPEED_LIMIT) {
@@ -812,6 +814,7 @@ int i3c_device_adv_info_get(struct i3c_device_desc *target)
 		}
 	}
 
+	memcpy(&target->getcaps, &caps, sizeof(target->getcaps));
 	target->data_length.mrl = mrl.len;
 	target->data_length.mwl = mwl.len;
 	target->data_length.max_ibi = mrl.ibi_len;
@@ -1512,3 +1515,4 @@ int i3c_bus_init(const struct device *dev, const struct i3c_dev_list *dev_list)
 err_out:
 	return ret;
 }
+#endif /*CONFIG_I3C_CONTROLLER*/
