@@ -67,19 +67,36 @@ config MCTP_I2C_GPIO_TARGET
 config MCTP_I3C_CONTROLLER
 	bool "MCTP I3C Controller Binding"
 	depends on I3C_CONTROLLER
-	depends on I3C_USE_IBI
 	help
 	  Build the MCTP I3C controller binding to use MCTP over Zephyr's I3C
-	  interface and IBI to signal from targets to a request to send messages.
+	  interface. This binding can receive target notifications through IBI
+	  signaling or polling mode.
+
+config MCTP_I3C_CONTROLLER_POLLING
+	bool "MCTP I3C Controller polling mode"
+	depends on MCTP_I3C_CONTROLLER
+	default y if !I3C_USE_IBI
+	help
+	  Enable periodic polling of MCTP I3C targets for pending reads.
+	  This mode is useful on controllers that do not support IBIs or where
+	  IBIs are disabled.
+
+config MCTP_I3C_CONTROLLER_POLL_INTERVAL_MS
+	int "MCTP I3C polling interval (ms)"
+	depends on MCTP_I3C_CONTROLLER_POLLING
+	default 10
+	range 1 60000
+	help
+	  Polling interval in milliseconds for checking each configured I3C
+	  endpoint for pending data.
 
 config MCTP_I3C_TARGET
 	bool "MCTP I3C Target Binding"
 	depends on I3C_TARGET
-	depends on I3C_USE_IBI
 	depends on I3C_TARGET_BUFFER_MODE
 	help
 	  Build the MCTP I3C target binding to use MCTP over Zephyr's I3C target
-	  interface and IBI to signal a request to send messages to the bus controller.
+	  interface and optionally IBI to signal a request to send messages to the bus controller.
 
 config MCTP_USB
 	bool "MCTP USB Binding"
