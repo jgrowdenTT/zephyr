@@ -1007,6 +1007,24 @@ class ProjectBuilder(FilterBuilder):
             finally:
                 self._add_to_processing_queue(processing_queue, next_op)
 
+        elif op == "cached_filter":
+            try:
+                filtered = self.parse_generated().get(self.instance.name)
+            except (OSError, ValueError):
+                # No usable previous configuration (e.g. cmake never completed).
+                next_op = 'cmake'
+            else:
+                if filtered:
+                    logger.debug(f"filtering {self.instance.name}")
+                    self.instance.status = TwisterStatus.FILTER
+                    self.instance.reason = "runtime filter"
+                    results.filtered_runtime_increment()
+                    self.instance.add_missing_case_status(TwisterStatus.FILTER)
+                    next_op = 'report'
+                else:
+                    next_op = 'build'
+            self._add_to_processing_queue(processing_queue, next_op)
+
         # The build process, call cmake and build with configured generator
         elif op == "cmake":
             try:
@@ -2089,14 +2107,17 @@ class TwisterRunner:
                         processing_queue.append({"op": "report", "test": instance})
                 elif test_only and instance.run:
                     processing_queue.append({"op": "run", "test": instance})
+                elif self.env.options.aggressive_no_clean and os.path.exists(
+                    os.path.join(instance.build_dir, "CMakeCache.txt")
+                ):
+                    # Reuse the existing build; a filter is evaluated against the
+                    # previous configuration instead of re-running cmake.
+                    op = "cached_filter" if instance.testsuite.filter else "build"
+                    processing_queue.append({"op": op, "test": instance})
                 elif instance.filter_stages and "full" not in instance.filter_stages:
                     processing_queue.append({"op": "filter", "test": instance})
                 else:
-                    cache_file = os.path.join(instance.build_dir, "CMakeCache.txt")
-                    if os.path.exists(cache_file) and self.env.options.aggressive_no_clean:
-                        processing_queue.append({"op": "build", "test": instance})
-                    else:
-                        processing_queue.append({"op": "cmake", "test": instance})
+                    processing_queue.append({"op": "cmake", "test": instance})
 
     def process_tasks(
             self, processing_queue: deque, processing_ready: dict[str, TestInstance],

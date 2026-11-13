@@ -14,3 +14,8 @@ target_sources_ifdef(CONFIG_TM_MEMORY_ALLOCATION     app PRIVATE src/tm_memory_a
 target_sources_ifdef(CONFIG_TM_MESSAGE               app PRIVATE src/tm_message_processing_test.c)
 target_sources_ifdef(CONFIG_TM_PREEMPTIVE            app PRIVATE src/tm_preemptive_scheduling_test.c)
 target_sources_ifdef(CONFIG_TM_SYNCHRONIZATION       app PRIVATE src/tm_synchronization_processing_test.c)
+
+# Shorter measurement periods for slow targets, e.g. -DTM_TEST_DURATION=5 (seconds, default 30).
+if(DEFINED TM_TEST_DURATION)
+  target_compile_definitions(app PRIVATE TM_TEST_DURATION=${TM_TEST_DURATION})
+endif()

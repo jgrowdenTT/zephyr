@@ -2878,6 +2878,70 @@ def test_twisterrunner_add_tasks_to_queue(
            [mock.call(el) for el in expected_pipeline_elements]
 
 
+@pytest.mark.parametrize(
+    'filt, expected_op',
+    [(None, 'build'), ('CONFIG_SMP', 'cached_filter')],
+    ids=['no_filter', 'filter']
+)
+def test_twisterrunner_add_tasks_to_queue_aggressive_no_clean(
+    tmp_path,
+    filt,
+    expected_op
+):
+    (tmp_path / 'CMakeCache.txt').touch()
+    instance = mock.Mock(run=True, retries=0, status=TwisterStatus.NONE, build_dir=tmp_path)
+    instance.testsuite.build = True
+    instance.testsuite.filter = filt
+    env_mock = mock.Mock()
+    env_mock.options.aggressive_no_clean = True
+
+    tr = TwisterRunner({'dummy': instance}, [mock.Mock()], env=env_mock)
+    tr.get_cmake_filter_stages = mock.Mock(return_value=['full'])
+    tr.results = mock.Mock(iteration=0)
+
+    processing_queue_mock = mock.Mock()
+
+    tr.add_tasks_to_queue(processing_queue_mock)
+
+    processing_queue_mock.append.assert_called_once_with(
+        {'op': expected_op, 'test': instance}
+    )
+
+
+@pytest.mark.parametrize(
+    'parse_res, expected_op, expected_status',
+    [
+        ({'dummy instance name': True}, 'report', TwisterStatus.FILTER),
+        ({'dummy instance name': False}, 'build', TwisterStatus.NONE),
+        (FileNotFoundError, 'cmake', TwisterStatus.NONE),
+    ],
+    ids=['filtered', 'not_filtered', 'no_previous_config']
+)
+def test_projectbuilder_process_cached_filter(
+    mocked_jobserver,
+    tmp_path,
+    parse_res,
+    expected_op,
+    expected_status
+):
+    instance_mock = mock.Mock(status=TwisterStatus.NONE)
+    instance_mock.name = 'dummy instance name'
+    pb = ProjectBuilder(instance_mock, mock.Mock(), mocked_jobserver)
+    pb.options = mock.Mock(outdir=tmp_path, log_file=None, log_level="DEBUG")
+    if isinstance(parse_res, type):
+        pb.parse_generated = mock.Mock(side_effect=parse_res)
+    else:
+        pb.parse_generated = mock.Mock(return_value=parse_res)
+    pb.cmake = mock.Mock()
+    processing_queue = deque()
+
+    pb.process(processing_queue, {}, {'op': 'cached_filter'}, mock.Mock(), mock.Mock())
+
+    pb.cmake.assert_not_called()
+    assert list(processing_queue) == [{'op': expected_op, 'test': instance_mock}]
+    assert instance_mock.status == expected_status
+
+
 TESTDATA_19 = [
     ('linux'),
     ('nt')

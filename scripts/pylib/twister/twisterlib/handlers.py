@@ -70,8 +70,6 @@ def terminate_process(proc):
             with contextlib.suppress(ProcessLookupError, psutil.NoSuchProcess):
                 os.kill(child.pid, signal.SIGTERM)
     proc.terminate()
-    # sleep for a while before attempting to kill
-    time.sleep(0.5)
     proc.kill()
 
 
@@ -471,8 +469,10 @@ class DeviceHandler(Handler):
         while not ser.isOpen():
             time.sleep(0.1)
 
-        # Clear serial leftover.
-        ser.reset_input_buffer()
+        # Clear serial leftover. Not for serial_pty: the pty is new (and flushed by open()), and
+        # flushing here, up to 0.1s after open, would drop the start of the console output.
+        if not getattr(self, "serial_pty_attached", False):
+            ser.reset_input_buffer()
 
         with open(self.log, "w", encoding="utf-8") as log_out_fp:
             while ser.isOpen():
@@ -755,7 +755,7 @@ class DeviceHandler(Handler):
 
         runner = hardware.runner or self.options.west_runner
         serial_pty = hardware.serial_pty
-
+        self.serial_pty_attached = bool(serial_pty)
         if not serial_pty:
             serial_device = hardware.serial
         else:

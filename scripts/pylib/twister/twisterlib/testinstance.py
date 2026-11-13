@@ -402,8 +402,15 @@ class TestInstance:
         if content:
             os.makedirs(subdir, exist_ok=True)
             file = os.path.join(subdir, "testsuite_extra.conf")
-            with open(file, "w", encoding='utf-8') as f:
-                f.write(content)
+            # Skip identical rewrites so the unchanged mtime doesn't force a CMake re-run
+            try:
+                with open(file, encoding='utf-8') as f:
+                    unchanged = f.read() == content
+            except OSError:
+                unchanged = False
+            if not unchanged:
+                with open(file, "w", encoding='utf-8') as f:
+                    f.write(content)
 
         return content
 

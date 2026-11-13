@@ -11,11 +11,14 @@ zephyr_include_directories(
   ${ZEPHYR_BASE}/subsys/testsuite/ztest/include
 )
 
-if(DEFINED TC_RUNID)
-  zephyr_compile_definitions(TC_RUNID=${TC_RUNID})
-endif()
-
 zephyr_library()
+
+# TC_RUNID changes on every twister run; scope it to the code that prints it
+# (ztest and the test application) so the rest of the build stays cacheable.
+if(DEFINED TC_RUNID)
+  zephyr_library_compile_definitions(TC_RUNID=${TC_RUNID})
+  target_compile_definitions(app PRIVATE TC_RUNID=${TC_RUNID})
+endif()
 
 # For strtok_r() and strdup()
 zephyr_library_compile_options(-U_POSIX_C_SOURCE -D_POSIX_C_SOURCE=200809L)
