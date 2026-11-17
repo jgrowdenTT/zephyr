@@ -17,7 +17,16 @@ if(SB_CONFIG_BOOTLOADER_MCUBOOT)
   # Link the footer size output of this MCUboot build with the main sysbuild image
   set_target_properties(${image} PROPERTIES MCUBOOT_FOOTER_UPDATE_IMAGES ${DEFAULT_IMAGE})
 
-  set_config_string(${image} CONFIG_BOOT_SIGNATURE_KEY_FILE "${SB_CONFIG_BOOT_SIGNATURE_KEY_FILE}")
+  # The bootloader may take a comma-separated list of verification keys. The
+  # list applies to the bootloader only; application signing keeps using
+  # SB_CONFIG_BOOT_SIGNATURE_KEY_FILE.
+  if(NOT SB_CONFIG_BOOTLOADER_SIGNATURE_KEY_FILES STREQUAL "")
+    set_config_string(${image} CONFIG_BOOT_SIGNATURE_KEY_FILE
+                      "${SB_CONFIG_BOOTLOADER_SIGNATURE_KEY_FILES}")
+  else()
+    set_config_string(${image} CONFIG_BOOT_SIGNATURE_KEY_FILE
+                      "${SB_CONFIG_BOOT_SIGNATURE_KEY_FILE}")
+  endif()
 
   if(SB_CONFIG_MCUBOOT_DIRECT_XIP_GENERATE_VARIANT)
     ExternalZephyrVariantProject_Add(

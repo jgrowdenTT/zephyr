@@ -203,6 +203,16 @@ config BOOT_SIGNATURE_KEY_FILE
 	help
 	  Absolute path to signing key file to use with MCUBoot.
 
+config BOOTLOADER_SIGNATURE_KEY_FILES
+	string "Comma-separated MCUboot verification key files"
+	default ""
+	help
+	  Verification keys embedded in the MCUboot bootloader, as a
+	  comma-separated list. When set, it replaces BOOT_SIGNATURE_KEY_FILE
+	  for the bootloader only. Application signing keeps using
+	  SB_CONFIG_BOOT_SIGNATURE_KEY_FILE. Follows upstream MCUboot rules:
+	  the first entry may be a keypair, later entries must be public-only.
+
 config SUPPORT_BOOT_ENCRYPTION
 	bool
 	depends on !BOOT_SIGNATURE_TYPE_NONE && !MCUBOOT_MODE_DIRECT_XIP && !MCUBOOT_MODE_DIRECT_XIP_WITH_REVERT && !MCUBOOT_MODE_FIRMWARE_UPDATER
